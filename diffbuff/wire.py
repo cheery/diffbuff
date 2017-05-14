@@ -76,7 +76,7 @@ def encode_many(kind, values):
     output = []
     for value in values:
         output.extend(encode_payload(kind, value))
-    return output
+    return encode_leb128(len(output)) + output
 
 def encode_payload(kind, value):
     if kind == INT:
@@ -182,8 +182,58 @@ class Node(object):
         self.tag = tag
         self.kind = kind
         self.value = value
+        self.hash = -1
+
+    def __hash__(self):
+        """
+        The hash is computed only once so that diff, dict() and set()
+        is efficient. Node is still mutable though. You must recursively
+        reset the hash if you change the contents of these nodes.
+        """
+        if self.hash != -1:
+            return self.hash
+        if isinstance(self.value, list):
+            return hash(tuple(sorted(self.value)))
+        elif self.kind == PMSG:
+            return hash(tuple(sorted([tuple(a) for a in self.value])))
+        elif self.kind == SUNION:
+            return hash(tuple(sorted(list(self.value))))
+        elif self.kind == MUNION:
+            return hash(tuple(sorted(self.value.items())))
+        else:
+            h = hash(self.value)
+        self.hash = hash((self.kind, self.tag, h))
+        if self.hash == -1:
+            self.hash = -2
+        return self.hash
+
+    def __cmp__(self, other):
+        """
+        The sorting defined by wire.Node is for the purpose
+        of computing diff on buffers.
+        """
+        z = cmp(self.tag, other.tag)
+        if z == 0:
+            z = cmp(self.kind, other.kind)
+        if z == 0:
+            z = cmp(hash(self), hash(other))
+        if z == 0:
+            if self.kind == SUNION:
+                z = cmp(
+                    sorted(list(self.value)),
+                    sorted(list(other.value)))
+            elif self.kind == MUNION:
+                z = cmp(
+                    sorted(self.value.items()),
+                    sorted(other.value.items()))
+            else:
+                z = cmp(self.value, other.value)
+        return z
 
     def __repr__(self):
+        """
+        Pretty printing will be provided in a separate module.
+        """
         return "{0.tag}:{0.value}".format(self)
 
 INT   = 0
