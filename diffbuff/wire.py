@@ -141,13 +141,13 @@ def encode_leb128(value):
 
 def encode_sleb128(value):
     output = []
-    more = true
+    more = True
     while more:
         byte = value & 0x7F
         value >>= 7
         if ((value ==  0 and byte & 0x40 == 0) or
            (value == -1 and byte & 0x40 != 0)):
-           more = false
+           more = False
         output.append(byte | 0x80)
     output[0] &= 0x7F
     output.reverse()
@@ -178,10 +178,13 @@ def decode_sleb128(data, offset):
     return value, offset
 
 class Node(object):
-    def init(self, tag, kind, value):
+    def __init__(self, tag, kind, value):
         self.tag = tag
         self.kind = kind
         self.value = value
+
+    def __repr__(self):
+        return "{0.tag}:{0.value}".format(self)
 
 INT   = 0
 PINT  = 1
