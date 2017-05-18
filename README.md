@@ -1,6 +1,12 @@
 # diffbuff
 
-Differenciable protocol buffers, the first implementation.
+Differenciable protocol buffers, the first attempt at implementation.
+
+## Status
+
+This project has turned out to be far much more difficult than I estimated. There
+is a partial implementation of the X-Diff -algorithm in the diffbuff/treediff.py
+module. Other than that, this goes into the abandoned bin.
 
 ## Implementation schedule
 

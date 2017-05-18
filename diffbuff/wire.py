@@ -183,6 +183,16 @@ class Node(object):
         self.kind = kind
         self.value = value
         self.hash = -1
+        self.count = 1
+        if self.kind in (PMSG, SUNION):
+            for item in value:
+                self.count += item.count
+        elif self.kind == MUNION:
+            for key, value in value.iteritems():
+                self.count += key.count
+                self.count += value.count
+        elif isinstance(value, list):
+            self.count += len(value)
 
     def __hash__(self):
         """
@@ -192,14 +202,14 @@ class Node(object):
         """
         if self.hash != -1:
             return self.hash
-        if isinstance(self.value, list):
-            return hash(tuple(sorted(self.value)))
-        elif self.kind == PMSG:
+        if self.kind == PMSG:
             return hash(tuple(sorted([tuple(a) for a in self.value])))
         elif self.kind == SUNION:
             return hash(tuple(sorted(list(self.value))))
         elif self.kind == MUNION:
             return hash(tuple(sorted(self.value.items())))
+        elif isinstance(self.value, list):
+            return hash(tuple(sorted(self.value)))
         else:
             h = hash(self.value)
         self.hash = hash((self.kind, self.tag, h))
